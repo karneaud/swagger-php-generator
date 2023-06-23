@@ -11,7 +11,7 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
 {
     static const MODEL_CLASS_NAME = 'AbstractModel';
     static const NAMESPACE_MODEL = 'Model';
-    public function build(array $api): void
+    public function build(array $api)
     {
         $namespaceName = $this->getNamespace();
 
