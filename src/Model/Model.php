@@ -1,10 +1,10 @@
 <?php
-namespace SwaggerGen;
+namespace SwaggerGen/Model;
 
 use DateTimeInterface;
 use JsonSerializable;
 
-class SwaggerModel implements JsonSerializable {
+class Model implements JsonSerializable {
 	public const DATE_FORMAT = 'Y-m-d H:i:s';
 
 	private $_is_error = false;
