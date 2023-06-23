@@ -3,6 +3,7 @@
 namespace SwaggerGen\Generator;
 
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Property;
 use Nette\PhpGenerator\PhpNamespace;
 use Symfony\Component\Serializer\NameConverter\CamelCaseToSnakeCaseNameConverter;
 use Symfony\Component\Yaml\Yaml;
@@ -11,28 +12,31 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
 {
     const MODEL_CLASS_NAME = 'Model';
     const NAMESPACE_MODEL = 'Model';
+
+    public function __construct(string $namespace, array $options, $more_specificity = false)
+    {
+        $this->namespace = $namespace;
+        $this->build($options);
+    }
     
     static function getNamespaceModel(): string {
-		return "{$this->namespace}\\".self::NAMESPACE_MODEL;
+		return self::NAMESPACE_MODEL;
     }
 
     function namespaceModel(): string {
-	return self::getNamespaceModel();
+	    return self::getNamespaceModel();
     }
 	
-    public function build(array $options): void
+    public function build(array $api)
     {
         $namespaceName = $this->getNamespaceModel();
 
-        $api = Yaml::parseFile($options['file_path']);
-
         $namespace = new PhpNamespace($namespaceName);
 
-        foreach ($api['definitions'] as $className => $classDetails) {
+        foreach (($api['definitions'] ?? $api['components']['schemas']) as $className => $classDetails) {
             $class = new ClassType($className, $namespace);
             $class->setExtends("$namespaceName\\" . self::MODEL_CLASS_NAME);
             $class->addComment('** This file was generated automatically, you might want to avoid editing it **');
-
             if (!empty($classDetails['description'])) {
                 $class->addComment("\n" . $classDetails['description']);
             }
@@ -43,8 +47,8 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
                 $required = $classDetails['allOf'][1]['required'];
                 $properties = $classDetails['allOf'][1]['properties'];
             } else {
-                $required = $classDetails['required'];
-                $properties = $classDetails['properties'];
+                $required = $classDetails['required'] ?? null;
+                $properties = $classDetails['properties'] ?? null;
             }
 
             $this->classProperties($properties, $class, $required);
@@ -90,7 +94,7 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
             }
 
             $property->addComment("@var $commentType");
-
+            
             if (in_array($propertyName, $required, true)) {
                 $property->addComment('@required');
             } else {
@@ -132,19 +136,27 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
         }
     }
 
+    /**
+	 * @param string $type
+	 * @return bool
+	 */
+	protected function notScalarType(string $type): bool{
+		return !in_array($type, ['integer', 'string', 'boolean', 'number']);
+	}
+
     public function saveClasses(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->saveClassesInternal($dir, $this->getNamespaceModel());
+        $this->saveClassesInternal($dir, "{$this->namespace}\\" . $this->getNamespaceModel());
     }
 
     public function dumpParentClass(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/Model.php', $this->getNamespaceModel());
+        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/Model.php', "{$this->namespace}" . $this->getNamespaceModel());
     }
 
-    private function blankValue(ClassType $property, string $type): void
+    private function blankValue(Property $property, string $type): void
     {
         if ($type !== 'array' && $this->notScalarType($type)) {
             return;
