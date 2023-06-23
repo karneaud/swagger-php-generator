@@ -9,22 +9,28 @@ use Symfony\Component\Yaml\Yaml;
 
 class GenerateModels extends AbstractGenerator implements GeneratorInterface
 {
-    const MODEL_CLASS_NAME = 'SwaggerGenModel';
+    const MODEL_CLASS_NAME = 'Model';
     const NAMESPACE_MODEL = 'Model';
-
-    static function getNamespaceModel(): string{
-		return "{$this->namespace}\\".self::NAMESPACE_MODEL;
-	}
     
-    public function build(array $api)
+    static function getNamespaceModel(): string {
+		return "{$this->namespace}\\".self::NAMESPACE_MODEL;
+    }
+
+    function namespaceModel(): string {
+	return self::getNamespaceModel();
+    }
+	
+    public function build(array $options): void
     {
-        $namespaceName = $this->getNamespace();
+        $namespaceName = $this->getNamespaceModel();
+
+        $api = Yaml::parseFile($options['file_path']);
 
         $namespace = new PhpNamespace($namespaceName);
 
         foreach ($api['definitions'] as $className => $classDetails) {
             $class = new ClassType($className, $namespace);
-            $class->setExtends("$namespaceName\\Model\\" . self::MODEL_CLASS_NAME);
+            $class->setExtends("$namespaceName\\" . self::MODEL_CLASS_NAME);
             $class->addComment('** This file was generated automatically, you might want to avoid editing it **');
 
             if (!empty($classDetails['description'])) {
@@ -50,7 +56,7 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
     private function classProperties(array $properties, ClassType $class, ?array $required): void
     {
         $converter = new CamelCaseToSnakeCaseNameConverter;
-        $namespaceName = $this->getNamespace();
+        $namespaceName = $this->getNamespaceModel();
         if (is_null($required)) {
             $required = [];
         }
@@ -129,13 +135,13 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
     public function saveClasses(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->saveClassesInternal($dir, $self::getNamespaceModel());
+        $this->saveClassesInternal($dir, $this->getNamespaceModel());
     }
 
     public function dumpParentClass(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/' . self::MODEL_CLASS_NAME . '.php', self::getNamespaceModel());
+        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/Model.php', $this->getNamespaceModel());
     }
 
     private function blankValue(ClassType $property, string $type): void
