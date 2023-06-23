@@ -39,7 +39,7 @@ class Generate
         ?string $generate_class_path = null,
         ?array $additional_classes = null
     ) {
-	$yaml_options = Yaml::parseFile($yaml_file);
+	$yaml_options = preg_match("/\.json$", $yaml_file)? (array) json_decode(file_get_contents($yaml_file), true) : Yaml::parse(file_get_contents($yaml_file),true);
         $this->base_path = $dir;
         $this->generateOptions = array_filter(array_merge($this->generateDefaults, $additional_classes));
 
