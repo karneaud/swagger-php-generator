@@ -1,12 +1,12 @@
 <?php
 
-namespace SwaggerGen;
+namespace SwaggerGen\Message\Request;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
-class SwaggerRequest implements RequestInterface {
+class Request implements RequestInterface {
 
 	public const METHOD = '';
 	public const URI = '';
