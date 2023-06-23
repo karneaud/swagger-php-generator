@@ -9,8 +9,9 @@ interface GeneratorInterface
      * Builds the generator based on the provided options
      *
      * @param array $options
+     * @return array array of files info
      */
-    public function generate(array $options);
+    public function generate(array $options) : array;
     /**
      * Returns the namespace used by the generator
      *
