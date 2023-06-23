@@ -3,9 +3,10 @@
 namespace SwaggerGen;
 
 use Symfony\Component\Yaml\Yaml;
-use SwaggerGen\Generator\GeneratorModel;
-use SwaggerGen\Generator\GeneratorRequest;
-use SwaggerGen\Generator\GeneratorResponse;
+use SwaggerGen\Generator\GenerateModels;
+use SwaggerGen\Generator\GenerateRequests;
+#use SwaggerGen\Generator\GeneratorResponse;
+use SwaggerGen\Generator\GeneratorInterface;
 
 class Generate
 {
@@ -16,7 +17,7 @@ class Generate
     private $generateDefaults = [
         'model' => true,
         'request' => true,
-        'response' => true
+        'response' => false
     ];
     private $class_files = [];
     private $generateOptions = [];
@@ -39,13 +40,13 @@ class Generate
         ?string $generate_class_path = null,
         ?array $additional_classes = null
     ) {
-	$yaml_options = preg_match("/\.json$", $yaml_file)? (array) json_decode(file_get_contents($yaml_file), true) : Yaml::parse(file_get_contents($yaml_file),true);
+	    $yaml_options = preg_match("/\.json$/", $yaml_file)? (array) json_decode(file_get_contents($yaml_file), true) : Yaml::parse(file_get_contents($yaml_file),true);
         $this->base_path = $dir;
-        $this->generateOptions = array_filter(array_merge($this->generateDefaults, $additional_classes));
+        $this->generateOptions = is_null($additional_classes)? $this->generateDefaults : array_filter(array_merge($this->generateDefaults, $additional_classes));
 
-        $generate_class_path = $generate_class_path ?? 'SwaggerGen\Generator';
+        $generate_class_path = $generate_class_path ?? 'SwaggerGen\\Generator';
 
-	$this->generate( $namespace, $generate_class_path, $yaml_options, $more_specificity );
+	    $this->generate( $namespace, $generate_class_path, $yaml_options, $more_specificity );
     }
 
     /**
@@ -53,17 +54,19 @@ class Generate
      *
      * @param string $namespace
      * @param string $class_path
-     * @param string $yaml_options
+     * @param array $yaml_options
      * @param bool   $more_specificity
      */
-    public function generate(string $namespace, string $class_path, string $yaml_options, bool $more_specificity = false)
+    public function generate(string $namespace, string $class_path, array $yaml_options, bool $more_specificity = false)
     {
-        foreach($this-generateOptions as $option => $value) {
-		$generator_class_name = $value === true? "Generate{capitalize($option)}" : $value; 
-		$generator_class_name = "$class_path\\$generator_class_name";
-		$generator = new $generator_class_name($namespace,$yaml_options,$more_specificty);
-		$this->addClass($option, $generator);
-	}
+        foreach($this->generateOptions as $option => $value) {
+            if($value) {
+                $generator_class_name = $value === true? sprintf("Generate%ss" , ucfirst($option)) : $value; 
+                $generator_class_name = "$class_path\\$generator_class_name";
+                $generator = new $generator_class_name($namespace,$yaml_options,$more_specificity);
+                $this->addClass($option, $generator);
+            }
+        }
     }
 
     /**
@@ -72,7 +75,7 @@ class Generate
      */
     private function addClass(string $type, GeneratorInterface $generator)
     {
-        $this->class_fles[$type] = $generator;
+        $this->class_files[$type] = $generator;
     }
 
     /**
@@ -82,7 +85,7 @@ class Generate
      * @param string $namespace
      * @param bool $specificty
      */
-    protected function generateModelClasses(string $namespace, $yaml_data, $specificity = false)
+    public function generateModelClasses(string $namespace, $yaml_data, $specificity = false)
     {
         $this->addClass('model' , new GenerateModels($namespace, $yaml_data, $specificity ));
     }
@@ -95,7 +98,7 @@ class Generate
      * @param string $dir
      * @param bool   $specificity
      */
-    protected function generateRequestClasses(string $namespace,array $yaml_data, bool $specificity = false)
+    public function generateRequestClasses(string $namespace,array $yaml_data, bool $specificity = false)
     {
         $this->addClass('request' , new GenerateModels($namespace, $yaml_data, $specificity ));
     }
@@ -107,9 +110,23 @@ class Generate
      * @param string $namespace
      * @param bool $specificity
      */
-    protected function generateResponseClasses(string $namespace, array $yaml_data, bool $specificity = false)
+    public function generateResponseClasses(string $namespace, array $yaml_data, bool $specificity = false)
     {
         $generator = new GenerateResponses($namespace, $yaml_data, $specificity);
         $this->addClass('response',$generator);
+    }
+
+    function getGeneratedClassFiles(): array {
+        return $this->class_files;
+    }
+
+    function getGeneratedFilesCount(): int
+    {
+        $totalCount = 0;
+        foreach ($this->class_files as $item) {
+            $totalCount += $item->getGeneratedFilesCount();
+        }
+
+        return $totalCount;
     }
 }
