@@ -9,8 +9,13 @@ use Symfony\Component\Yaml\Yaml;
 
 class GenerateModels extends AbstractGenerator implements GeneratorInterface
 {
-    static const MODEL_CLASS_NAME = 'AbstractModel';
-    static const NAMESPACE_MODEL = 'Model';
+    const MODEL_CLASS_NAME = 'SwaggerGenModel';
+    const NAMESPACE_MODEL = 'Model';
+
+    static function getNamespaceModel(): string{
+		return "{$this->namespace}\\".self::NAMESPACE_MODEL;
+	}
+    
     public function build(array $api)
     {
         $namespaceName = $this->getNamespace();
@@ -124,13 +129,13 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
     public function saveClasses(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->saveClassesInternal($dir, $this->getNamespace());
+        $this->saveClassesInternal($dir, $self::getNamespaceModel());
     }
 
     public function dumpParentClass(string $dir): void
     {
         $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/AbstractModel.php', $this->getNamespace());
+        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/' . self::MODEL_CLASS_NAME . '.php', self::getNamespaceModel());
     }
 
     private function blankValue(ClassType $property, string $type): void
