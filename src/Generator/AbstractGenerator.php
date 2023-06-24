@@ -1,12 +1,18 @@
 <?php
 namespace SwaggerGen\Generator;
 
-use RuntimeException;
-
 abstract class AbstractGenerator implements GeneratorInterface
 {
     protected $namespace;
     protected $class_files = [];
+    
+    const NAMESPACE='';
+
+    public function __construct(string $namespace, array $options, $more_specificity = false)
+    {
+        $this->namespace = $namespace;
+        $this->build($options);
+    }
 
     abstract protected function build(array $options);
 
@@ -31,4 +37,11 @@ abstract class AbstractGenerator implements GeneratorInterface
         return count($this->class_files);
     }
 
+    protected function addClass(string $model, string $content ) {
+        $this->class_files[$model] = [
+            'namespace' => $this->getNamespace(),
+            'dir' => preg_replace("/\\\\/", DIRECTORY_SEPARATOR ,$this->getNamespace()),
+            'content' => $content
+        ];
+    }
 }
