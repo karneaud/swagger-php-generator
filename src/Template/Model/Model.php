@@ -1,5 +1,5 @@
 <?php
-namespace SwaggerGen/Model;
+namespace SwaggerGen\Model;
 
 use DateTimeInterface;
 use JsonSerializable;
