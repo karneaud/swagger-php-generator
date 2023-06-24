@@ -10,8 +10,8 @@ use Symfony\Component\Yaml\Yaml;
 
 class GenerateModels extends AbstractGenerator implements GeneratorInterface
 {
-    const MODEL_CLASS_NAME = 'Model';
-    const NAMESPACE_MODEL = 'Model';
+    const CLASS_NAME = 'AbstractModel';
+    const NAMESPACE = 'Model';
 
     public function __construct(string $namespace, array $options, $more_specificity = false)
     {
@@ -19,23 +19,23 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
         $this->build($options);
     }
     
-    static function getNamespaceModel(): string {
-		return self::NAMESPACE_MODEL;
+    function getNamespace(): string {
+		return "{$this->namespace}\\" . self::NAMESPACE;
     }
 
     function namespaceModel(): string {
-	    return self::getNamespaceModel();
+	    return $this->getNamespace();
     }
 	
     public function build(array $api)
     {
-        $namespaceName = $this->getNamespaceModel();
+        $namespaceName = $this->namespaceModel();
 
         $namespace = new PhpNamespace($namespaceName);
 
         foreach (($api['definitions'] ?? $api['components']['schemas']) as $className => $classDetails) {
             $class = new ClassType($className, $namespace);
-            $class->setExtends("$namespaceName\\" . self::MODEL_CLASS_NAME);
+            $class->setExtends("$namespaceName\\" . self::CLASS_NAME);
             $class->addComment('** This file was generated automatically, you might want to avoid editing it **');
             if (!empty($classDetails['description'])) {
                 $class->addComment("\n" . $classDetails['description']);
@@ -52,15 +52,20 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
             }
 
             $this->classProperties($properties, $class, $required);
-
-            $this->classes[$className] = $class;
+            $php_file = (string)$class; 
+            $use = "{$this->getNamespace()}\\" . self::CLASS_NAME;
+			$php_file = "<?php\nnamespace {$this->getNamespace()};\nuse $use;\n$php_file";
+			    
+            $this->addClass($className,$php_file);
         }
+        // add template
+        $this->addClass('AbstractModel',file_get_contents(dirname(__DIR__) . '/Template/Model/Model.php'));
     }
 
     private function classProperties(array $properties, ClassType $class, ?array $required): void
     {
         $converter = new CamelCaseToSnakeCaseNameConverter;
-        $namespaceName = $this->getNamespaceModel();
+        $namespaceName = $this->namespaceModel();
         if (is_null($required)) {
             $required = [];
         }
@@ -144,18 +149,6 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
 		return !in_array($type, ['integer', 'string', 'boolean', 'number']);
 	}
 
-    public function saveClasses(string $dir): void
-    {
-        $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->saveClassesInternal($dir, "{$this->namespace}\\" . $this->getNamespaceModel());
-    }
-
-    public function dumpParentClass(string $dir): void
-    {
-        $dir = $this->dirNamespace($dir, self::NAMESPACE_MODEL);
-        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Model/Model.php', "{$this->namespace}" . $this->getNamespaceModel());
-    }
-
     private function blankValue(Property $property, string $type): void
     {
         if ($type !== 'array' && $this->notScalarType($type)) {
@@ -182,4 +175,6 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
                 throw new RuntimeException("The property with name {$property->getName()} and type $type was not recognised to set a default value");
         }
     }
+
+    
 }

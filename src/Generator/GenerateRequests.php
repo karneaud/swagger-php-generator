@@ -10,16 +10,20 @@ use Symfony\Component\Yaml\Yaml;
 
 class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 {
-    const REQUEST_CLASS_NAME = 'Request';
-    const NAMESPACE_REQUEST = 'Message\\Request';
+    const CLASS_NAME = 'Request';
+    const NAMESPACE = 'Message\\Request';
 
-    protected $mode_specificity = false;
+    protected $mode_specificity = true;
 
     public function __construct(string $namespace, array $options, bool $more_specificity = false)
     {
         $this->namespace = $namespace;
         $this->more_specificity = $more_specificity;
         $this->build($options);
+    }
+
+    function getNamespace() : string {
+        return "{$this->namespace}\\" . self::NAMESPACE;
     }
 
 	/**
@@ -49,7 +53,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
             foreach ($path_details as $method => $method_details) {
                 $class_name = ucfirst($method) . $path_camel;
                 $class = new ClassType($class_name);
-                $class->setExtends(self::REQUEST_CLASS_NAME);
+                $class->setExtends(self::CLASS_NAME);
                 $class->addComment($method_details['summary']);
 
                 $uri = empty($base_uri) ? $path : "{$base_uri}/{$path}";
@@ -58,8 +62,11 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 
                 $this->handleParams($method_details, $class);
                 $this->handleResponse($method_details, $class);
-
-                $this->class_files[$class_name] = $class;
+                $php_file = (string)$class; 
+                $use = "{$this->getNamespace()}\\" . self::CLASS_NAME;
+                $php_file = "<?php\nnamespace {$this->getNamespace()};\nuse $use;\n$php_file";
+                
+                $this->addClass($class_name,$php_file);
             }
         }
     }
@@ -145,11 +152,11 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
     }
 
     function namespaceRequest() {
-	    return self::getNamespaceRequest();
+	    return $this->getNamespace();
     }
 
    function namespaceModel() {
-	   return GenerateModels::getNamespaceModel();
+	   return GenerateModels::NAMESPACE;
    }
 
     private function handleQueryParams(array $query_params, ClassType $class): void
@@ -218,21 +225,6 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 
         $this->handlePathParams($path_params, $class);
         $this->handleQueryParams($query_params, $class);
-    }
-
-    public function saveClasses(string $dir): void
-    {
-        $dir = $this->dirNamespace($dir, self::NAMESPACE_REQUEST);
-        $use_ns = $this->namespaceModel();
-        $use = "use $use_ns\\Model;\n";
-        $this->saveClassesInternal($dir, $this->namespaceRequest(), $use);
-    }
-
-    public function dumpParentClass(string $dir): void
-    {
-        $dir = $this->dirNamespace($dir, self::NAMESPACE_REQUEST);
-        $this->dumpParentInternal($dir, dirname(__DIR__) . '/Message/Request/Request.php', $this->namespaceRequest());
-        $this->dumpParentInternal($dir, __DIR__ . '/Http/Client.php', $this->namespaceRequest(), "{$this->namespace}\\" . $this->namespaceModel());
     }
 
     private function handleBodyParam(array $parameter, ClassType $class): void
@@ -315,7 +307,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
             return $property['type'] ?? $property['content']['application/json']['schema']['type'];
 		}
 
-		return preg_replace('/(#\/definitions\/|#\/components\/)/', '', $property['$ref']);
+		return preg_replace('/(#\/definitions\/|#\/components\/schemas\/)/', '', $property['$ref']);
 	}
 
     /**
