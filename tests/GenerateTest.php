@@ -11,7 +11,7 @@ class GenerateTest extends TestCase
     protected $generate;
 
     public function setUp():Void {
-        $this->generate = new Generate('App', __DIR__ . '/Mocks/swagger.yaml', 'tests/data', false, null, null);
+        $this->generate = new Generate('App', __DIR__ . '/Mocks/swagger.yaml', 'tests/data', false, null, ['response'=>'GenerateResponses']);
         
     }
 
@@ -32,8 +32,13 @@ class GenerateTest extends TestCase
         $this->assertTrue(file_exists("tests/data/".$models['User']['dir'] . "/User.php"));
     }
 
+    public function testCanGenerateResponseClass() {
+        $classes = $this->generate->getGeneratedClassFiles();
+        $this->assertArrayHasKey('GetUsersResponse',$response = $classes['response']->getGeneratedClassFiles());
+    }
+
     function tearDown(): void {
-       $this->__deleteDir('tests/data');
+        $this->__deleteDir('tests/data');
     }
 
     protected function __deleteDir($dir) {
