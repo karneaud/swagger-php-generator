@@ -206,7 +206,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 
     protected function handleParams(array $method_details, ClassType $class): void
     {
-        $parameters = $method_details['parameters'] ?: [];
+        $parameters = $method_details['parameters'] ?? [];
         $path_params = $query_params = [];
 
         foreach ($parameters as $parameter) {
