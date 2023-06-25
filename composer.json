@@ -1,6 +1,7 @@
 {
 	"name": "karneaud/swagger-php-generator",
     "license": "MIT",
+	"type":"application",
 	"authors": [
 		{
 			"name": "karneaud",
@@ -26,5 +27,6 @@
 	"scripts": {
 		"generate" : "./bin/generator",
 		"test":"phpunit"
-	}
+	},
+	"bin":["bin/generate"]
 }
