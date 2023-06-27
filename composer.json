@@ -22,8 +22,12 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"SwaggerGen\\": "src/",
-			"SwaggerGen\\Tests\\":"tests/"
+			"SwaggerGen\\": "src/"
+		}
+	},
+	"autoload-dev":{
+		"psr-4": {
+			"SwaggerGen\\Tests":"tests/"
 		}
 	},
 	"scripts": {
