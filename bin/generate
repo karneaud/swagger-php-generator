@@ -20,7 +20,7 @@ $options = getopt("", array_map(function($option){
 	return "{$option}:";
 }, $opt_fields));
 $options = array_merge([
-	"more_specificity"=>false,
+	"more_specificity"=>'false',
 	"generate_class_path"=>null,
         "additional_classes"=>null
 ],$options);
@@ -36,5 +36,5 @@ if (!empty($opt_errors)){
 
 echo "Generating models under namespace '{$options['namespace']}' from the YAML file at '{$options['yaml-path']}', will save to {$options['dir']}\n";
 
-$generator = new Generate($options['namespace'], $options['yaml-path'], $options['dir'], $options['more-specificity']==='true', $options);
+$generator = new Generate($options['namespace'], $options['yaml-path'], $options['dir'], $options['more-specificity']==='true', $options['generate_class_path'],$options['additional_classes']);
 
