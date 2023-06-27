@@ -2,6 +2,7 @@
 	"name": "karneaud/swagger-php-generator",
     "license": "MIT",
 	"type":"application",
+	"version":"1.0.0-alpha",
 	"authors": [
 		{
 			"name": "karneaud",
