@@ -175,6 +175,19 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
                 throw new RuntimeException("The property with name {$property->getName()} and type $type was not recognised to set a default value");
         }
     }
+/**
+	 * Changes a Swagger definition into a type
+	 *
+	 * @param array $property
+	 * @return string
+	 */
+	protected function typeFromRef(array $property): string{
+        if (empty($property['$ref'])){
+            return $property['type'] ?? $property['content']['application/json']['schema']['type'];
+		}
+
+		return preg_replace('/(#\/definitions\/|#\/components\/schemas\/)/', '', $property['$ref']);
+	}
 
     
 }
