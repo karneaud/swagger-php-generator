@@ -40,7 +40,9 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
     protected function build(array $api)
     {
 	
-        $base_uri = $this->stringNotEndWith($api['basePath'] ?? $api['servers'][0]['url'], '/');
+        if(!is_null(($b = $api['basePath'] ?? (isset($api['servers']) ? $api['servers'][0]['url'] : null)))) {
+            $base_uri = $this->stringNotEndWith($b, '/');
+        }
 
         foreach ($api['paths'] as $path => $path_details) {
             if ($this->more_specificity) {
@@ -54,7 +56,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
                 $class_name = ucfirst($method) . $path_camel;
                 $class = new ClassType($class_name);
                 $class->setExtends(self::CLASS_NAME);
-                $class->addComment($method_details['summary']);
+                $class->addComment($method_details['summary'] ?? ' ');
 
                 $uri = empty($base_uri) ? $path : "{$base_uri}/{$path}";
                 $class->addConstant('URI', $uri);
@@ -136,7 +138,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 
             $path_param['type'] = $path_param['type'] ?? $path_param['schema']['type'];
             $class->addProperty($param_name)
-                ->addComment($path_param['description'])
+                ->addComment($path_param['description'] ?? ' ')
                 ->addComment('')
                 ->addComment("@var {$path_param['type']}");
 
@@ -253,9 +255,9 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
         $has_2xx = false;
 
         foreach ($method_details['responses'] as $code_string => $method) {
-            $method['$ref'] = $method['$ref'] ?? ($method['content']? ($method['content']['application/json']['schema']['$ref'] ?? null) : null); 
+            $method['$ref'] = $method['$ref'] ?? (isset($method['content'])? ($method['content']['application/json']['schema']['$ref'] ?? null) : null); 
             $get_type_from = is_null($method['$ref']) ? 
-                $method : ($method['schema'] ?? ($method['content']? ($method['content']['application/json']['schema'] ?? null) : null) ) ;
+                $method : ($method['schema'] ?? (isset($method['content'])? ($method['content']['application/json']['schema'] ?? null) : null) ) ;
 
             if (!is_null($get_type_from)) {
                 $get_type_from['type'] = $get_type_from['type'] ?? $get_type_from['content']['application/json']['schema']['type'] ?? null;
@@ -294,6 +296,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
             ->addComment('@return Model')
             ->addParameter('client')
             ->setTypeHint('Client');
+        
     }
 
     /**
@@ -304,7 +307,7 @@ class GenerateRequests extends AbstractGenerator implements GeneratorInterface
 	 */
 	protected function typeFromRef(array $property): string{
         if (empty($property['$ref'])){
-            return $property['type'] ?? $property['content']['application/json']['schema']['type'];
+            return $property['type'] ?? (isset($property['content'])? $property['content']['application/json']['schema']['type'] : ' ');
 		}
 
 		return preg_replace('/(#\/definitions\/|#\/components\/schemas\/)/', '', $property['$ref']);
