@@ -13,13 +13,17 @@ use SwaggerGen\Generate;
 $opt_fields  = [
 	"yaml-path",
 	"namespace",
-	"dir",
+	"dir"
 ];
 
 $options = getopt("", array_map(function($option){
 	return "{$option}:";
 }, $opt_fields));
-
+$options = array_merge([
+	"more_specificity"=>false,
+	"generate_class_path"=>null,
+        "additional_classes"=>null
+],$options);
 $opt_errors = [];
 foreach ($opt_fields as $opt_field){
 	if (empty($options[$opt_field])){
@@ -32,5 +36,5 @@ if (!empty($opt_errors)){
 
 echo "Generating models under namespace '{$options['namespace']}' from the YAML file at '{$options['yaml-path']}', will save to {$options['dir']}\n";
 
-$generator = new Generate($options['namespace'], $options['yaml-path'], $options['dir'], $options['more-specificity']==='true');
+$generator = new Generate($options['namespace'], $options['yaml-path'], $options['dir'], $options['more-specificity']==='true', $options);
 
