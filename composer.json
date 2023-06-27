@@ -26,7 +26,7 @@
 		}
 	},
 	"scripts": {
-		"generate" : "./bin/generator",
+		"generate" : "./bin/generate",
 		"test":"phpunit"
 	},
 	"bin":["bin/generate"]
