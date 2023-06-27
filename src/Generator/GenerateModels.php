@@ -189,5 +189,18 @@ class GenerateModels extends AbstractGenerator implements GeneratorInterface
 		return preg_replace('/(#\/definitions\/|#\/components\/schemas\/)/', '', $property['$ref']);
 	}
 
-    
+    /**
+	 * @param string $string
+	 * @return string
+	 */
+	protected function unPlural(string $string): string{
+		if (substr($string, -3)==='ies'){
+			return substr($string, 0, -3).'y';
+		}
+		if (substr($string, -1)==='s'){
+			return substr($string, 0, -1);
+		}
+
+		return $string;
+	}
 }
