@@ -64,12 +64,12 @@ final class Generate
     public function generate(string $namespace, string $class_path, array $yaml_options, bool $more_specificity = false)
     {
         foreach($this->generateOptions as $option => $value) {
-            if($value) {
-                $generator_class_name = $value === true? sprintf("Generate%ss" , ucfirst($option)) : $value; 
-                $generator_class_name = "$class_path\\$generator_class_name";
-                $generator = new $generator_class_name($namespace,$yaml_options,$more_specificity);
-                $this->addClass($option, $generator);
-            }
+            if($value == false) continue;
+                
+            $generator_class_name = $value === true? sprintf("Generate%ss" , ucfirst($option)) : $value; 
+            $generator_class_name = "$class_path\\$generator_class_name";
+            $generator = new $generator_class_name($namespace,$yaml_options,$more_specificity);
+            $this->addClass($option, $generator);
         }
 
         $this->saveClasses();
